@@ -1,0 +1,7 @@
+{
+  "name": "adversis-security",
+  "description": "Security skills for agentic SaaS: baseline audit, threat model, and security posture. Run /security to get started.",
+  "version": "0.1.0",
+  "author": { "name": "Adversis" },
+  "repository": "https://github.com/adversis/skills"
+}
