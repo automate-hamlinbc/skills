@@ -6,11 +6,38 @@ Security skills for agentic SaaS applications. Audit your codebase against a str
 
 ## Install
 
+### From GitHub
+
 ```bash
-claude plugin install adversis/skills
+claude plugin marketplace add adversis/skills
+claude plugin install adversis-security
 ```
 
-Or from the plugin manager: `/plugin install adversis/skills`
+Restart Claude Code after installation.
+
+**Update:**
+
+```bash
+claude plugin marketplace update
+claude plugin update adversis-security
+```
+
+Or run `/plugin` to open the plugin manager.
+
+### Locally (from a cloned copy)
+
+```bash
+claude plugin marketplace add /path/to/skills
+claude plugin install adversis-security
+```
+
+For example, if you cloned this repo to `~/adversis-skills`:
+
+```bash
+git clone https://github.com/adversis/skills ~/adversis-skills
+claude plugin marketplace add ~/adversis-skills
+claude plugin install adversis-security
+```
 
 ## Get started
 
@@ -117,11 +144,7 @@ description: >
 
 ### Local development
 
-```bash
-git clone https://github.com/adversis/skills ~/adversis-skills
-claude plugin marketplace add ~/adversis-skills
-claude plugin install adversis-security
-```
+See the [Install — Locally](#locally-from-a-cloned-copy) section above.
 
 ---
 
