@@ -51,6 +51,12 @@ Grep for these library patterns to confirm:
 - LangGraph: `langgraph` in requirements
 - LangChain: `langchain` in requirements
 - nginx: `nginx.conf` or `default.conf` present in repo
+- Agent config files:
+  - Claude Code: `.claude/settings.json` or `.claude/settings.local.json`
+  - Cursor / generic MCP: `.mcp.json` or `.cursor/mcp.json`
+  - Windsurf: `.windsurf/mcp_config.json`
+  - Codex: `.codex/config.toml`
+  - Aider: `.aider.conf.yml` or `.aider.conf.yaml`
 
 Record what you found. Only run checks relevant to the detected stack.
 Skip any check for a stack component not present.
@@ -65,6 +71,7 @@ Stack detected:
   MCP:           [yes / no]
   Observability: [Langfuse / LangSmith / Phoenix / Helicone / none]
   Proxy:         [nginx config present / not detected]
+  Agent config:  [Claude Code / Cursor / Windsurf / Codex / Aider / none]
 ```
 
 ## Suppression rules — do not flag
@@ -718,6 +725,76 @@ Grep for all `createClient(` calls. For each:
 2. MCP tools that initialize a Supabase client: what key are they
    using? Service role + MCP tool + agent = RLS bypass on any
    injection: FINDING.
+
+---
+
+### 4D. Agent configuration files
+
+Only run if "Agent config" was detected during stack detection. Skip entirely
+if no agent config files are present.
+
+Read all detected agent config files. Apply the three check groups below.
+Only examine files that contain at least one of the keys `hooks`,
+`mcpServers`, or `permissions` — skip files that contain none. Do not flag
+patterns found in `.env.example`, `README.md`, or any file whose path
+contains `test`, `fixture`, `example`, `mock`, `stub`, or `seed`.
+
+---
+
+**Permission grants**
+
+Search in any file containing a `permissions` block:
+
+- Any entry matching `"Bash(*)"`, `"WebFetch(*)"`, `"Read(*)"`,
+  `"Write(*)"`, `"Edit(*)"`, or `"Agent(*)"` → OBSERVATION (wildcard
+  grants disable harness gating; flag so a reviewer can confirm these
+  are not present in production config)
+- `"bypassPermissions": true`, `"dangerouslySkipPermissions": true`,
+  `"approvalMode": "never"`, `"autoApprove": true`, or `"autoRun": true`
+  → FINDING (safety prompts disabled)
+- `"allowUnsandboxedCommands": true` or `"dangerouslyDisableSandbox": true`
+  → FINDING (sandbox escape hatch open)
+- `"denyRead"` key present in a `sandbox` block without a corresponding
+  `"Read(<path>)"` entry in the deny permissions list → OBSERVATION
+  (sandbox.denyRead only constrains Bash subprocesses; the Read tool
+  bypasses it entirely, so the restriction is incomplete)
+
+---
+
+**MCP server definitions**
+
+Search in any file containing a `mcpServers` block:
+
+- A `"command"` value set to `"curl"`, `"wget"`, `"sh"`, `"bash"`,
+  `"zsh"`, or `"eval"` → FINDING (MCP server runs a shell or downloader
+  as its process; executes on agent startup)
+- A `"command"` value of `"npx"`, `"uvx"`, `"bunx"`, or `"pnpm"` (dlx)
+  where the arguments include an `https://` or `github:` URL → OBSERVATION
+  (remote code fetched and executed at agent startup; flag for review of
+  the source URL and whether pinning or a hash is used)
+
+---
+
+**Hook commands**
+
+Search in any file containing a `hooks` block:
+
+- Any hook command string containing `curl`, `wget`, `nc`, `ncat`,
+  `netcat`, `scp`, or `rsync` → FINDING (hook performs network I/O;
+  potential exfiltration channel)
+- Any hook command string referencing `~/.ssh/`, `~/.aws/credentials`,
+  `~/.kube/`, `~/.gnupg/`, `~/.netrc`, or `.env` → FINDING (hook
+  reads credential or secret files)
+- Any hook command string containing `$(env)`, `$(printenv)`,
+  `$(set)`, or an environment variable interpolation matching
+  `*TOKEN*`, `*KEY*`, `*SECRET*`, `*PASSWORD*`, or `*CREDENTIAL*`
+  (e.g. `$ANTHROPIC_API_KEY`, `$AWS_SECRET_ACCESS_KEY`) → FINDING
+  (hook captures secrets from the environment)
+- A hook command referencing `.claude/hooks/*.sh`, `.claude/hooks/*.py`,
+  `.claude/hooks/*.js`, or `$CLAUDE_PROJECT_DIR/.claude/hooks/` →
+  OBSERVATION (the hook is approved once at config commit time, but the
+  referenced script can be mutated by any later commit without
+  re-prompting — same trust model as a Makefile called from a hook)
 
 ---
 
