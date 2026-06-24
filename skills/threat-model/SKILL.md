@@ -202,6 +202,11 @@ boundary?
 - Check: unsigned or unvalidated webhook payloads
 - Check: JWT validation missing issuer (`iss`) or audience (`aud`)
   claim check
+- Check: a service-to-service consumer that forwards the caller's
+  identity under a header name that diverges from the one the callee
+  actually reads — a renamed or dropped identity header silently
+  disables the callee's authorization; verify both sides agree on the
+  exact header-name contract, not just that names happen to match today
 
 **Tampering:** Can data be modified in transit or at rest without
 detection?
@@ -210,6 +215,11 @@ detection?
 - Check: log entries mutable by the logged process
 - Check: migration scripts that modify multi-tenant data without
   setting tenant context
+- Check: a shared or reusable CI/CD workflow consumed by many repos
+  (one workflow is the deploy path for all of them) — an unpinned
+  third-party action, a movable version tag, or a security gate the
+  caller can override has blast radius across every consumer, which
+  makes the shared workflow a high-value tampering target
 
 **Repudiation:** Can actions be taken without an audit trail?
 - Check: admin operations without structured event logging
@@ -245,6 +255,13 @@ higher-trust access?
   data operations
 - Check: Supabase service role key accessible to user-facing code
   paths or MCP tools
+- Check: a deploy or infrastructure-apply job whose only "approval" is
+  a manual-dispatch toggle, or that binds a deployment environment with
+  no required-reviewer protection rule configured server-side — the
+  gate is present in the workflow file but inert, so a single actor
+  ships to production unreviewed; verify the environment's protection
+  rules via the platform API, not the YAML (for a reusable workflow the
+  environment resolves against the calling repo)
 
 For each finding not already in the path model, add:
 

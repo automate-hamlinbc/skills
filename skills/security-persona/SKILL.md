@@ -48,10 +48,11 @@ re-run the relevant domain check rather than relying on the prior verdict.
 Surface confirmed changes as a note in the output document under the
 affected domain.
 
-Now read the codebase across six domains. For each domain, build an
-internal evidence map: what is present (with file references), what is
-absent, what is ambiguous. This drives the Phase 2 questions and the
-output tiers.
+Now read the codebase across six domains (plus an optional Deployment
+and supply chain companion, Domain 7, when the repo has CI/CD or IaC).
+For each domain, build an internal evidence map: what is present (with
+file references), what is absent, what is ambiguous. This drives the
+Phase 2 questions and the output tiers.
 
 ### Domain 1: Data isolation
 
@@ -150,6 +151,45 @@ Server Actions, Supabase client usage.
 - If threat-model has not been run: note this — the roadmap will
   lack structural path analysis. Recommend the user run
   threat-model after this skill for a more complete picture.
+
+### Domain 7: Deployment and supply chain (companion)
+
+Assess only when the repo has CI/CD workflows (`.github/workflows/*.yml`,
+other pipeline definitions) or infrastructure-as-code; otherwise mark
+N/A and say why. This is operational posture, not one of the six
+application domains — keep it in its own section of the output and do
+not blend it into the application verdicts.
+
+Read: pipeline definitions, deployment jobs, the platform's
+environment/approval settings, IaC templates.
+
+- Deploy approval gate: does each deploy or infra-apply job require a
+  real second-person approval? A manual-dispatch toggle alone, or a
+  deployment environment with no required-reviewer protection rule, is
+  an inert gate — verify protection rules via the platform API
+  (`gh api repos/<owner>/<repo>/environments`), not the workflow file.
+  For a reusable workflow the environment resolves against the calling
+  repo, so check per-caller.
+- Action / workflow pinning: are third-party actions on privileged
+  jobs pinned to a full commit SHA rather than a movable tag? Do
+  shared/reusable workflows pin their own actions and protect the
+  consumed tag?
+- Deploy credentials: short-lived federated credentials (OIDC) vs. a
+  long-lived stored deploy token or service-principal secret — and
+  does any unavoidable standing credential have a documented rotation
+  owner?
+- Shared-workflow integrity: a security or quality gate the caller can
+  silently lower (for example, a coverage threshold overridable to
+  zero) on a workflow consumed across many repos.
+- Source-of-truth integrity: is the deployed revision reachable from
+  the mainline branch, and does live infrastructure match the declared
+  IaC? Deployed-but-unlanded code means a clean redeploy ships
+  something else.
+
+Where a control's enforcement lives in another repo (a reusable
+workflow, or the caller's environment settings), record it as a
+cross-boundary unknown with the flip-condition — what to check, and
+where — never as verified from the visible side alone.
 
 ---
 
