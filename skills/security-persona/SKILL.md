@@ -169,7 +169,12 @@ environment/approval settings, IaC templates.
   an inert gate — verify protection rules via the platform API
   (`gh api repos/<owner>/<repo>/environments`), not the workflow file.
   For a reusable workflow the environment resolves against the calling
-  repo, so check per-caller.
+  repo, so check per-caller. Where the hosting plan does not support
+  required reviewers (the rule is rejected), treat the gate as inert and
+  look for compensating controls: a deployment-branch policy, branch
+  protection plus required PR review on the deploy source, and a
+  branch-scoped deploy-credential subject, with the residual risk
+  recorded.
 - Action / workflow pinning: are third-party actions on privileged
   jobs pinned to a full commit SHA rather than a movable tag? Do
   shared/reusable workflows pin their own actions and protect the

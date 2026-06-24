@@ -261,7 +261,12 @@ higher-trust access?
   gate is present in the workflow file but inert, so a single actor
   ships to production unreviewed; verify the environment's protection
   rules via the platform API, not the YAML (for a reusable workflow the
-  environment resolves against the calling repo)
+  environment resolves against the calling repo). Note: some hosting
+  plans do not offer the required-reviewer rule at all (the API rejects
+  it), so the gate cannot be made a true second-person hold — compensate
+  with a deployment-branch policy, branch protection plus required PR
+  review on the deploy source, and a branch-scoped (not environment-
+  scoped) deploy-credential subject, and record the residual risk
 
 For each finding not already in the path model, add:
 
