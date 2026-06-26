@@ -151,6 +151,6 @@ The relevant tools:
 
 ## What this baseline does not cover
 
-CI/CD hygiene, GitHub Actions security, secrets sprawl, cloud config, and dependency scanning are covered by the operational companion (opsec-baseline). Dependency CVEs, supply chain, and training infrastructure are out of scope by design. These exclusions are deliberate. This baseline covers only the attack surface created by the agentic application layer itself.
+CI/CD hygiene, GitHub Actions security, secrets sprawl, cloud config, and dependency scanning are out of scope for *this baseline* — it covers only the attack surface created by the agentic application layer itself. A subset of deployment and supply-chain posture (approval-gate reality, action/workflow pinning, deploy-credential model, shared-workflow integrity) is assessed as an *optional companion* by the threat-model and security-persona skills when the repo has CI/CD or IaC. Dependency CVE scanning and training-infrastructure security remain out of scope by design.
 
 Run the [lint-baseline skill →] for a mechanical audit against these criteria, including framework-specific findings for FastAPI, Next.js, Supabase, and MCP server integration patterns.
